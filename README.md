@@ -10,18 +10,14 @@ El carácter @.
 
 El dominio pasado como parámetro.
 
+```mysql
 CREATE PROCEDURE `crear_email` (IN dominio VARCHAR(45))
-
 BEGIN
-
    IF NEW.Email = null THEN
-
     SET NEW.Email = CONCAT(LEFT(NEW.Nombre, 3), LEFT(NEW.Apellido1, 3), LEFT(NEW.Apellido2, 3), '@', dominio);
-   
    END IF;
-
 END
-
+```
 Una vez creada la tabla escriba un trigger con las siguientes características:
 
 Trigger: trigger_crear_email_before_insert
@@ -36,18 +32,16 @@ Si el nuevo valor del email no es NULL se guardará en la tabla el valor del ema
 
 Nota: Para crear la nueva dirección de email se deberá hacer uso del procedimiento crear_email.
 
+```mysql
 CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`trigger_crear_email_before_insert` BEFORE INSERT ON `Cliente` FOR EACH ROW
 
-
 BEGIN
-
   CALL crear_email('viveros.ull.es');
-
 END
-
+```
 2. Crear un trigger permita verificar que las personas en el Municipio del catastro no pueden vivir en dos viviendas diferentes.
 
-'''mysql
+```mysql
 CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`PersonaVivePiso_BEFORE_INSERT` BEFORE INSERT ON `PersonaVivePiso` FOR EACH ROW
 BEGIN
 	IF (NEW.DNI IN (SELECT DNI
@@ -55,9 +49,9 @@ BEGIN
 			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'invalid data';
     END IF;
 END
-'''
+```
 
-'''mysql
+```mysql
 CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`PersonaViveUnifamiliar_BEFORE_INSERT` BEFORE INSERT ON `PersonaViveUnifamiliar` FOR EACH ROW
 BEGIN
 	IF (NEW.DNI IN (SELECT DNI
@@ -65,6 +59,6 @@ BEGIN
 			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'invalid data';
     END IF;
 END
-'''
+```
 
 3. Crear el o los trigger que permitan mantener actualizado el stock de la base de dato de viveros.

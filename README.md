@@ -68,3 +68,12 @@ END
 ```
 
 3. Crear el o los trigger que permitan mantener actualizado el stock de la base de dato de viveros.
+
+```mysql
+CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`Producto_Pedido_AFTER_INSERT` AFTER INSERT ON `Producto_Pedido` FOR EACH ROW
+BEGIN
+	Update Productos
+    set Productos.Stock = Productos.Stock - NEW.Cantidad
+    where Productos.CódigoBarras = NEW.CódigoBarras;
+END
+```

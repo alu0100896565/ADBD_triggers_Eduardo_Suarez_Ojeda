@@ -77,3 +77,7 @@ BEGIN
     where Productos.CódigoBarras = NEW.CódigoBarras;
 END
 ```
+
+Con este trigger para la tabla de los pedidos actualizo la tabla de productos de tal manera que para cada pedido se resta del stock la cantidad de producto del mismo siempre y cuando tengan el mismo código de barras, es decir, que sea el mismo producto.
+
+Se podría utilizar tambien un trigger similar que en vez de restar sume si se crea una nueva table que indique la compra de nuevos productos para rellenar el stock.

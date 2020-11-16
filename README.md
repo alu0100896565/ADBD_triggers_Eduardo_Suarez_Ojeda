@@ -73,12 +73,17 @@ END
 ```mysql
 CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`Producto_Pedido_AFTER_INSERT` AFTER INSERT ON `Producto_Pedido` FOR EACH ROW
 BEGIN
+	Declare total int;
+    select Stock into total from Productos where CódigoBarras = NEW.CódigoBarras;
+    if (total - NEW.Cantidad) >= 0 then
 	Update Productos
     set Productos.Stock = Productos.Stock - NEW.Cantidad
     where Productos.CódigoBarras = NEW.CódigoBarras;
+    else set NEW.`ID Pedido` = NULL;
+    end if;
 END
 ```
 
-Con este trigger para la tabla de los pedidos actualizo la tabla de productos de tal manera que para cada pedido se resta del stock la cantidad de producto del mismo siempre y cuando tengan el mismo código de barras, es decir, que sea el mismo producto.
+Con este trigger para la tabla de los pedidos actualizo la tabla de productos de tal manera que para cada pedido se resta del stock la cantidad de producto del mismo siempre y cuando tengan el mismo código de barras, es decir, que sea el mismo producto. También tiene en cuenta que los pedidos nunca pueden superar el número de productos en stock, por lo que si la cantidad pedida supera el stock evita la inserción en la tabla mediante cambiar el id del pedido a NULL, lo que hace que no se incluya ya que este atributo no puede ser nulo.
 
 Se podría utilizar tambien un trigger similar que en vez de restar sume si se crea una nueva table que indique la compra de nuevos productos para rellenar el stock.

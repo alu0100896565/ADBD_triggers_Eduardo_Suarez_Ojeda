@@ -87,3 +87,7 @@ END
 Con este trigger para la tabla de los pedidos actualizo la tabla de productos de tal manera que para cada pedido se resta del stock la cantidad de producto del mismo siempre y cuando tengan el mismo código de barras, es decir, que sea el mismo producto. También tiene en cuenta que los pedidos nunca pueden superar el número de productos en stock, por lo que si la cantidad pedida supera el stock evita la inserción en la tabla mediante cambiar el id del pedido a NULL, lo que hace que no se incluya ya que este atributo no puede ser nulo.
 
 Se podría utilizar tambien un trigger similar que en vez de restar sume si se crea una nueva table que indique la compra de nuevos productos para rellenar el stock.
+
+## Mensajes de error:
+
+Para los casos en los que los triggers deben desechar la inserción en las tablas se puede añadir al trigger 'SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = <mensaje>' para enviar un mensaje de error, para el caso del stock se podría mandar un mensaje de 'stock insuficiente' y para el caso del catastro 'esta persona ya tiene una vivienda asignada en piso/unifamiliar' dependiendo del trigger que detecte el error.

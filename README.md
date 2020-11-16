@@ -46,14 +46,14 @@ END
 ```
 2. Crear un trigger permita verificar que las personas en el Municipio del catastro no pueden vivir en dos viviendas diferentes.
 
-Para determinar la vivienda de cada persona tengo dos tablas en las que en cada una se le asigna una vivienda a cada persona, una para los pisos y otra para las viviendas unifamiliares. En ambas el DNI es clave primaria única, por lo que no se puede repetir en la misma tabla, sin embargo, se corre el risgo de que exista el mismo DNI en las dos tablas simultáneamente, por lo que mi trigger para evitar que las personas tengan varios domicilios consiste en evitar que el un DNI pueda estar presente en ambas tablas. A su vez sería conveniente crear un trigger para antes de la actualización con la misma función.
+Para determinar la vivienda de cada persona tengo dos tablas en las que en cada una se le asigna una vivienda a cada persona, una para los pisos y otra para las viviendas unifamiliares. En ambas el DNI es clave primaria única, por lo que no se puede repetir en la misma tabla, sin embargo, se corre el risgo de que exista el mismo DNI en las dos tablas simultáneamente, por lo que mi trigger para evitar que las personas tengan varios domicilios consiste en evitar que el un DNI pueda estar presente en ambas tablas de tal manera que si ya existe en una tabla cambia el nuevo dni a NULL, que como en la propia tabla tiene la restricción de no ser null, la fila no se añade a la tabla. A su vez sería conveniente crear un trigger para antes de la actualización con la misma función.
 
 ```mysql
 CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`PersonaVivePiso_BEFORE_INSERT` BEFORE INSERT ON `PersonaVivePiso` FOR EACH ROW
 BEGIN
 	IF (NEW.DNI IN (SELECT DNI
 		FROM PersonaViveUnifamiliar)) THEN
-			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'invalid data';
+			set NEW.DNI = NULL;
     END IF;
 END
 ```
@@ -63,7 +63,7 @@ CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`PersonaViveUnifamiliar_BEFORE_INSE
 BEGIN
 	IF (NEW.DNI IN (SELECT DNI
 		FROM PersonaVivePiso)) THEN
-			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'invalid data';
+			set NEW.DNI = NULL;
     END IF;
 END
 ```

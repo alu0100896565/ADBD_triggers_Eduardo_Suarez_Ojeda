@@ -10,14 +10,12 @@ El carácter @.
 
 El dominio pasado como parámetro.
 
-Para realizar el primer ejercicio creo un nuevo procedimiento en la base de datos de viveros el cual tiene un parámetro llamado dominio y que se encarga de comprobar si el email de los datos introducidos es igual a null y en caso afirmativo genera un email por defecto mediante los valores de nombre y apellidos del cliente y 
+Para realizar el primer ejercicio creo un nuevo procedimiento en la base de datos de viveros al cual se le llama con los parámetros de entrada nombre, apellido1, apellido2, dominio  el valor de salida email donde se guarda el email resultante. Para crear el email concateno los tres primeros caracteres de nombre y dos apellidos y el dominio especificado.
 
 ```mysql
-CREATE PROCEDURE `crear_email` (IN dominio VARCHAR(45))
+CREATE PROCEDURE `crear_email` (IN Nombre varchar(45), in Apellido1 varchar(45), IN Apellido2 varchar(45), IN dominio VARCHAR(45), OUT email varchar(45))
 BEGIN
-   IF NEW.Email = null THEN
-    SET NEW.Email = CONCAT(LEFT(NEW.Nombre, 3), LEFT(NEW.Apellido1, 3), LEFT(NEW.Apellido2, 3), '@', dominio);
-   END IF;
+    SET Email = CONCAT(LEFT(Nombre, 3), LEFT(Apellido1, 3), LEFT(Apellido2, 3), '@', dominio);
 END
 ```
 Una vez creada la tabla escriba un trigger con las siguientes características:
@@ -34,13 +32,16 @@ Si el nuevo valor del email no es NULL se guardará en la tabla el valor del ema
 
 Nota: Para crear la nueva dirección de email se deberá hacer uso del procedimiento crear_email.
 
-En esta parte creo un trigger con el esquema por defecto de MySQL workbench para que en el caso de antes de la inserción se llame al procedimiento crear_email con el dominio "viveros.ull.es".
+En esta parte creo un trigger con el esquema por defecto de MySQL workbench para que en el caso de antes de la inserción se llame al procedimiento crear_email con el dominio "viveros.ull.es" si el nuevo email es igual a null. Dentro de ese if se le asigna el nuevo valor a email, resultado de el procedimiento email con los valores ingresados en la inserción de la fila.
 
 ```mysql
 CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`trigger_crear_email_before_insert` BEFORE INSERT ON `Cliente` FOR EACH ROW
-
 BEGIN
-  CALL crear_email('viveros.ull.es');
+	DECLARE EmailPrefab varchar(45);
+	IF NEW.Email IS NULL THEN
+	CALL crear_email(NEW.Nombre, NEW.Apellido1, NEW.Apellido2, 'viveros.ull.es', @EmailPrefab);
+	set NEW.Email = @EmailPrefab;
+    END iF;
 END
 ```
 2. Crear un trigger permita verificar que las personas en el Municipio del catastro no pueden vivir en dos viviendas diferentes.

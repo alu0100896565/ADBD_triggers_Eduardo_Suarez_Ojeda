@@ -46,14 +46,14 @@ END
 ```
 2. Crear un trigger permita verificar que las personas en el Municipio del catastro no pueden vivir en dos viviendas diferentes.
 
-Para determinar la vivienda de cada persona tengo dos tablas en las que en cada una se le asigna una vivienda a cada persona, una para los pisos y otra para las viviendas unifamiliares. En ambas el DNI es clave primaria única, por lo que no se puede repetir en la misma tabla, sin embargo, se corre el risgo de que exista el mismo DNI en las dos tablas simultáneamente, por lo que mi trigger para evitar que las personas tengan varios domicilios consiste en evitar que el un DNI pueda estar presente en ambas tablas de tal manera que si ya existe en una tabla cambia el nuevo dni a NULL, que como en la propia tabla tiene la restricción de no ser null, la fila no se añade a la tabla. A su vez sería conveniente crear un trigger para antes de la actualización con la misma función.
+Para determinar la vivienda de cada persona tengo dos tablas en las que en cada una se le asigna una vivienda a cada persona, una para los pisos y otra para las viviendas unifamiliares. En ambas el DNI es clave primaria única, por lo que no se puede repetir en la misma tabla, sin embargo, se corre el risgo de que exista el mismo DNI en las dos tablas simultáneamente, por lo que mi trigger para evitar que las personas tengan varios domicilios consiste en evitar que el un DNI pueda estar presente en ambas tablas de tal manera que si ya existe en una tabla lanza una excepción con el mensaje apropiado para cada tabla. A su vez sería conveniente crear un trigger para antes de la actualización con la misma función.
 
 ```mysql
 CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`PersonaVivePiso_BEFORE_INSERT` BEFORE INSERT ON `PersonaVivePiso` FOR EACH ROW
 BEGIN
 	IF (NEW.DNI IN (SELECT DNI
 		FROM PersonaViveUnifamiliar)) THEN
-			set NEW.DNI = NULL;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "La persona con el DNI añadido ya vive en una vivienda unifamiliar";
     END IF;
 END
 ```
@@ -63,7 +63,7 @@ CREATE DEFINER = CURRENT_USER TRIGGER `mydb`.`PersonaViveUnifamiliar_BEFORE_INSE
 BEGIN
 	IF (NEW.DNI IN (SELECT DNI
 		FROM PersonaVivePiso)) THEN
-			set NEW.DNI = NULL;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "La persona con el DNI añadido ya vive en un piso";
     END IF;
 END
 ```
@@ -79,15 +79,11 @@ BEGIN
 	Update Productos
     set Productos.Stock = Productos.Stock - NEW.Cantidad
     where Productos.CódigoBarras = NEW.CódigoBarras;
-    else set NEW.`ID Pedido` = NULL;
+    else SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "La cantidad de producto pedida supera el stock";
     end if;
 END
 ```
 
-Con este trigger para la tabla de los pedidos actualizo la tabla de productos de tal manera que para cada pedido se resta del stock la cantidad de producto del mismo siempre y cuando tengan el mismo código de barras, es decir, que sea el mismo producto. También tiene en cuenta que los pedidos nunca pueden superar el número de productos en stock, por lo que si la cantidad pedida supera el stock evita la inserción en la tabla mediante cambiar el id del pedido a NULL, lo que hace que no se incluya ya que este atributo no puede ser nulo.
+Con este trigger para la tabla de los pedidos actualizo la tabla de productos de tal manera que para cada pedido se resta del stock la cantidad de producto del mismo siempre y cuando tengan el mismo código de barras, es decir, que sea el mismo producto. También tiene en cuenta que los pedidos nunca pueden superar el número de productos en stock, por lo que si la cantidad pedida supera el stock evita la inserción en la tabla al lanzar una excepción con el mensaje "La cantidad de producto pedida supera el stock".
 
 Se podría utilizar tambien un trigger similar que en vez de restar sume si se crea una nueva table que indique la compra de nuevos productos para rellenar el stock.
-
-## Mensajes de error:
-
-Para los casos en los que los triggers deben desechar la inserción en las tablas se puede añadir al trigger 'SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = <mensaje>' para enviar un mensaje de error, para el caso del stock se podría mandar un mensaje de 'stock insuficiente' y para el caso del catastro 'esta persona ya tiene una vivienda asignada en piso/unifamiliar' dependiendo del trigger que detecte el error.

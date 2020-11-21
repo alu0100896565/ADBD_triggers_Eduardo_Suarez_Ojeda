@@ -213,7 +213,7 @@ BEGIN
 	Update Productos
     set Productos.Stock = Productos.Stock - NEW.Cantidad
     where Productos.CódigoBarras = NEW.CódigoBarras;
-    else set NEW.`ID Pedido` = NULL;
+    else SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "La cantidad de producto pedida supera el stock";
     end if;
 END$$
 
